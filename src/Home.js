@@ -27,6 +27,51 @@ const AudioRecorder = () => {
       ? RNFS.DownloadDirectoryPath
       : RNFS.DocumentDirectoryPath;
 
+
+      const uploadFile = async (filePath, fileName) => {
+        if (!filePath) {
+          Alert.alert('Error', 'No file selected');
+          return;
+        }
+    
+        // Create a form data object
+        const formData = new FormData();
+        formData.append('file', {
+          uri: filePath,
+          type: 'audio/m4a', 
+          name: fileName 
+        });
+        console.log(JSON.stringify({
+            uri: filePath,
+            type: 'audio/m4a', 
+            name: fileName 
+          }), "dndiowfnowe___")
+
+        
+    
+        try {
+          const response = await fetch('apiEndPoint', {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+    
+          if (response.ok) {
+            const result = await response.json();
+            Alert.alert('Success', 'File uploaded successfully');
+            console.log('Upload result:', result);
+          } else {
+            Alert.alert('Error', 'Failed to upload file');
+            console.error('Upload failed:', response.status);
+          }
+        } catch (error) {
+          Alert.alert('Error', 'An error occurred during upload');
+          console.error('Upload error:', error);
+        }
+      };
+
   // Function to render the list of audio files
   const renderAudioFile = ({item}) => {
     return (
@@ -73,7 +118,6 @@ const AudioRecorder = () => {
   const listAudioFiles = async () => {
     try {
       const files = await RNFS.readDir(downloadDir);
-      console.log(files, 'filess___');
       const audioFileList = files.filter(file => file.name.endsWith('.m4a'));
       setAudioFiles(audioFileList);
     } catch (error) {
@@ -94,7 +138,6 @@ const AudioRecorder = () => {
       console.log('Recording: ', e.currentPosition);
       return;
     });
-    console.log('Recording started at: ', result);
     listAudioFiles();
   };
 
@@ -116,6 +159,7 @@ const AudioRecorder = () => {
     await RNFS.moveFile(result, path)
       .then(() => {
         console.log('File saved at: ', path);
+        uploadFile(path,fileName)
         listAudioFiles();
       })
       .catch(error => {
