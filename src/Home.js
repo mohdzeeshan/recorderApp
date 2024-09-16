@@ -8,10 +8,12 @@ import {
   SafeAreaView,
   FlatList,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import RNFS from 'react-native-fs';
 import Sound from 'react-native-sound';
+import {check, checkMultiple,PERMISSIONS, RESULTS, request} from 'react-native-permissions';
 
 const AudioRecorder = () => {
   useEffect(() => {
@@ -63,11 +65,11 @@ const AudioRecorder = () => {
             Alert.alert('Success', 'File uploaded successfully');
             console.log('Upload result:', result);
           } else {
-            Alert.alert('Error', 'Failed to upload file');
+            // Alert.alert('Error', 'Failed to upload file');
             console.error('Upload failed:', response.status);
           }
         } catch (error) {
-          Alert.alert('Error', 'An error occurred during upload');
+          // Alert.alert('Error', 'An error occurred during upload');
           console.error('Upload error:', error);
         }
       };
@@ -94,18 +96,49 @@ const AudioRecorder = () => {
   const requestPermissions = async () => {
     if (Platform.OS === 'android') {
       try {
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        ]);
+        checkMultiple([PERMISSIONS.ANDROID.RECORD_AUDIO, PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE, PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE]).then(async (statuses) => {
+          if(statuses[PERMISSIONS.ANDROID.RECORD_AUDIO] !== 'granted'){
+          const result = await request(
+       
+             PERMISSIONS.ANDROID.RECORD_AUDIO 
+          );
+        
+          if (result === RESULTS.GRANTED) {
+            onStartRecord()
+            console.log('Audio recording permission granted');
+          } else {
+            console.log('Audio recording permission denied');
+          }
+        } else if (statuses[PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE] !== "granted"){
+          const result = await request(
+            Platform.OS === 'android' 
+              ? PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE 
+              : PERMISSIONS.IOS.MEDIA_LIBRARY
+          );
+        
+          if (result === RESULTS.GRANTED) {
+            console.log('Storage permission granted');
+          } else {
+            console.log('Storage permission denied');
+          }
+        }
 
-        return (
-          granted['android.permission.RECORD_AUDIO'] ===
-            PermissionsAndroid.RESULTS.GRANTED &&
-          granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
-            PermissionsAndroid.RESULTS.GRANTED
-        );
+          });
+
+          
+
+        // const granted = await PermissionsAndroid.requestMultiple([
+        //   PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+        //   PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        //   PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        // ]);
+
+        // return (
+        //   granted['android.permission.RECORD_AUDIO'] ===
+        //     PermissionsAndroid.RESULTS.GRANTED &&
+        //   granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
+        //     PermissionsAndroid.RESULTS.GRANTED
+        // );
       } catch (err) {
         console.warn(err);
         return false;
@@ -131,9 +164,8 @@ const AudioRecorder = () => {
     if (!hasPermission) {
       return;
     }
-
     setRecording(true);
-    const result = await audioRecorderPlayer.startRecorder();
+    await audioRecorderPlayer.startRecorder();
     audioRecorderPlayer.addRecordBackListener(e => {
       console.log('Recording: ', e.currentPosition);
       return;
@@ -154,6 +186,7 @@ const AudioRecorder = () => {
         : RNFS.DocumentDirectoryPath;
     const fileName = new Date().getUTCMilliseconds() + '_Audio.m4a';
     const path = `${downloadDir}/${fileName}`;
+    console.log(path,'savePath__')
 
     // Move the recorded file to the Downloads folder
     await RNFS.moveFile(result, path)
