@@ -64,24 +64,16 @@ const AudioRecorder = () => {
             let responseAudio = responseJSON.res_audio;
             const path = `${downloadDir}/responseFile.mp3`;
 
-            await RNFS.writeFile(path, responseAudio, 'base64').then(()=>{
+            RNFS.writeFile(path, responseAudio, 'base64').then(()=>{
               console.log('response File Creatd')
+              playAudio(path)
               listAudioFiles()
             })
 
 
 
           }
-    
-          if (response.ok) {
-
-            const result = await response.json();
-            Alert.alert('Success', 'File uploaded successfully');
-            console.log('Upload result:', result);
-          } else {
-            Alert.alert('Error', 'Failed to upload file');
-            console.error('Upload failed:', response.status);
-          }
+  
         } catch (error) {
           Alert.alert('Error', 'An error occurred during upload');
           console.error('Upload error:', error);
@@ -242,7 +234,7 @@ const AudioRecorder = () => {
     <SafeAreaView style={{flex:1}}>
         <View style={{flex:1,padding: 20}} >
         <Text style={{fontSize:18, fontWeight:600, marginBottom:10}}>Audio Recorder</Text>
-      {recording ? (
+      {!recording ? (
         <Button title="Start Recording" onPress={onStartRecord}/>
       ) : (
         // <Image src={require("./images/Mic.png")} style={{width:40, height:40, tintColor:'red'}}/>
