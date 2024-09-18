@@ -6,6 +6,7 @@ import {
   PermissionsAndroid,
   Platform,
   SafeAreaView,
+  Image,
   FlatList,
   TouchableOpacity,
   Alert,
@@ -22,7 +23,6 @@ const AudioRecorder = () => {
   const [recording, setRecording] = useState(false);
   const [audioFiles, setAudioFiles] = useState([]);
   const [currentSound, setCurrentSound] = useState(null);
-  const [blobData, setblobData] = useState(null) // Reference to the currently playing sound
 
   const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
   const downloadDir =
@@ -31,8 +31,8 @@ const AudioRecorder = () => {
       : RNFS.DocumentDirectoryPath;
 
 
-      const uploadFile = async (fileData) => {
-        if (!fileData) {
+      const uploadFile = async (filePath, fileName) => {
+        if (!filePath) {
           Alert.alert('Error', 'No file selected');
           return;
         }
@@ -41,10 +41,13 @@ const AudioRecorder = () => {
 
 
         const formData = new FormData();
-        formData.append('audio_input', fileData);  // Append the Blob or File object
+        formData.append('audio_input', {
+          uri: filePath,
+          type: 'audio/m4a',  // Adjust this based on the file type
+          name: fileName,
+        });
         formData.append('id', 2);                  // Append numeric or string data
         formData.append('dryrun', true);  
-        console.log(blobData, "dndiowfnowe___")
 
         try {
           const response = await fetch('https://d9a2-2600-6c40-657f-aa84-cc5-2153-fe9b-e676.ngrok-free.app/chat', {
@@ -54,8 +57,24 @@ const AudioRecorder = () => {
               'Content-Type': 'multipart/form-data',
             },
           });
+          const responseJSON = await response.json()
+
+          if (responseJSON){
+            console.log(JSON.stringify(responseJSON.res_audio), 'responseJSSONNN__')
+            let responseAudio = responseJSON.res_audio;
+            const path = `${downloadDir}/responseFile.mp3`;
+
+            await RNFS.writeFile(path, responseAudio, 'base64').then(()=>{
+              console.log('response File Creatd')
+              listAudioFiles()
+            })
+
+
+
+          }
     
           if (response.ok) {
+
             const result = await response.json();
             Alert.alert('Success', 'File uploaded successfully');
             console.log('Upload result:', result);
@@ -132,8 +151,9 @@ const AudioRecorder = () => {
   const listAudioFiles = async () => {
     try {
       const files = await RNFS.readDir(downloadDir);
-      const audioFileList = files.filter(file => file.name.endsWith('.m4a'));
-      setAudioFiles(audioFileList);
+      const audioFileList = files.filter(file => 
+        file.name.endsWith('.m4a') || file.name.endsWith('.mp3')
+      );      setAudioFiles(audioFileList);
     } catch (error) {
       console.log('Error reading directory:', error);
     }
@@ -159,8 +179,7 @@ const AudioRecorder = () => {
     const result = await audioRecorderPlayer.stopRecorder();
     audioRecorderPlayer.removeRecordBackListener();
     setRecording(false);
-    let base644 = await readFile(result,'base64')
-    setblobData(base644)
+
     
   // Define the path to save the file in the Downloads folder
     const downloadDir =
@@ -175,7 +194,7 @@ const AudioRecorder = () => {
     await RNFS.moveFile(result, path)
       .then(() => {
         console.log('File saved at: ', path);
-        uploadFile(base644,fileName)
+        uploadFile(path,fileName)
         listAudioFiles();
       })
       .catch(error => {
@@ -223,9 +242,10 @@ const AudioRecorder = () => {
     <SafeAreaView style={{flex:1}}>
         <View style={{flex:1,padding: 20}} >
         <Text style={{fontSize:18, fontWeight:600, marginBottom:10}}>Audio Recorder</Text>
-      {!recording ? (
+      {recording ? (
         <Button title="Start Recording" onPress={onStartRecord}/>
       ) : (
+        // <Image src={require("./images/Mic.png")} style={{width:40, height:40, tintColor:'red'}}/>
         <Button title="Stop Recording" onPress={onStopRecord} />
       )}
 
