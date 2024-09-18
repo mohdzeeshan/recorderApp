@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
-import RNFS from 'react-native-fs';
+import RNFS,{ readFile} from 'react-native-fs';
 import Sound from 'react-native-sound';
 import {check, checkMultiple,PERMISSIONS, RESULTS, request} from 'react-native-permissions';
 
@@ -21,7 +21,8 @@ const AudioRecorder = () => {
   }, []);
   const [recording, setRecording] = useState(false);
   const [audioFiles, setAudioFiles] = useState([]);
-  const [currentSound, setCurrentSound] = useState(null); // Reference to the currently playing sound
+  const [currentSound, setCurrentSound] = useState(null);
+  const [blobData, setblobData] = useState(null) // Reference to the currently playing sound
 
   const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
   const downloadDir =
@@ -30,29 +31,23 @@ const AudioRecorder = () => {
       : RNFS.DocumentDirectoryPath;
 
 
-      const uploadFile = async (filePath, fileName) => {
-        if (!filePath) {
+      const uploadFile = async (fileData) => {
+        if (!fileData) {
           Alert.alert('Error', 'No file selected');
           return;
         }
     
         // Create a form data object
-        const formData = new FormData();
-        formData.append('file', {
-          uri: filePath,
-          type: 'audio/m4a', 
-          name: fileName 
-        });
-        console.log(JSON.stringify({
-            uri: filePath,
-            type: 'audio/m4a', 
-            name: fileName 
-          }), "dndiowfnowe___")
 
-        
-    
+
+        const formData = new FormData();
+        formData.append('audio_input', fileData);  // Append the Blob or File object
+        formData.append('id', 2);                  // Append numeric or string data
+        formData.append('dryrun', true);  
+        console.log(blobData, "dndiowfnowe___")
+
         try {
-          const response = await fetch('apiEndPoint', {
+          const response = await fetch('https://d9a2-2600-6c40-657f-aa84-cc5-2153-fe9b-e676.ngrok-free.app/chat', {
             method: 'POST',
             body: formData,
             headers: {
@@ -65,11 +60,11 @@ const AudioRecorder = () => {
             Alert.alert('Success', 'File uploaded successfully');
             console.log('Upload result:', result);
           } else {
-            // Alert.alert('Error', 'Failed to upload file');
+            Alert.alert('Error', 'Failed to upload file');
             console.error('Upload failed:', response.status);
           }
         } catch (error) {
-          // Alert.alert('Error', 'An error occurred during upload');
+          Alert.alert('Error', 'An error occurred during upload');
           console.error('Upload error:', error);
         }
       };
@@ -125,20 +120,6 @@ const AudioRecorder = () => {
 
           });
 
-          
-
-        // const granted = await PermissionsAndroid.requestMultiple([
-        //   PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-        //   PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        //   PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        // ]);
-
-        // return (
-        //   granted['android.permission.RECORD_AUDIO'] ===
-        //     PermissionsAndroid.RESULTS.GRANTED &&
-        //   granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
-        //     PermissionsAndroid.RESULTS.GRANTED
-        // );
       } catch (err) {
         console.warn(err);
         return false;
@@ -178,8 +159,10 @@ const AudioRecorder = () => {
     const result = await audioRecorderPlayer.stopRecorder();
     audioRecorderPlayer.removeRecordBackListener();
     setRecording(false);
-
-    // Define the path to save the file in the Downloads folder
+    let base644 = await readFile(result,'base64')
+    setblobData(base644)
+    
+  // Define the path to save the file in the Downloads folder
     const downloadDir =
       Platform.OS === 'android'
         ? RNFS.DownloadDirectoryPath
@@ -192,7 +175,7 @@ const AudioRecorder = () => {
     await RNFS.moveFile(result, path)
       .then(() => {
         console.log('File saved at: ', path);
-        uploadFile(path,fileName)
+        uploadFile(base644,fileName)
         listAudioFiles();
       })
       .catch(error => {
