@@ -283,7 +283,7 @@ const AudioRecorder = () => {
         </Text>
         {Object.keys(checklist).map(key => (
           <View  key={key} style={{flexDirection:'row', marginBottom:10, alignItems:'center'}}>
-            <CheckBox value={ checklistSelected[key] == true } onValeChange={() => {}} style={{}} />
+            <CheckBox disabled value={ checklistSelected[key] == true } onValeChange={() => {}} style={{}} />
             <Text style={{fontSize:16, fontWeight:500, marginLeft:10}}>{checklist[key]}</Text>
           </View>
         ))}
