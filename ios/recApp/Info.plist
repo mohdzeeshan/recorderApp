@@ -39,6 +39,9 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Need microphone access for uploading audio</string>
 
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>We need access to your documents folder to save audio files.</string>
+
 	<!-- Location Access -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Location access is required to improve user experience</string>

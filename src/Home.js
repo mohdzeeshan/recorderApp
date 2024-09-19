@@ -2,12 +2,9 @@ import React, {useState, useRef, useEffect} from 'react';
 import {
   View,
   Text,
-  Button,
-  PermissionsAndroid,
   Platform,
   SafeAreaView,
   Image,
-  FlatList,
   TouchableOpacity,
   Alert,
 } from 'react-native';
@@ -15,7 +12,6 @@ import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import RNFS, {readFile} from 'react-native-fs';
 import Sound from 'react-native-sound';
 import {
-  check,
   checkMultiple,
   PERMISSIONS,
   RESULTS,
@@ -205,10 +201,10 @@ const AudioRecorder = () => {
         : RNFS.DocumentDirectoryPath;
     const fileName = new Date().getUTCMilliseconds() + '_Audio.m4a';
     const path = `${downloadDir}/${fileName}`;
-    console.log(path, 'savePath__');
+    console.log(downloadDir, fileName, path, 'savePath__');
 
     // Move the recorded file to the Downloads folder
-    await RNFS.moveFile(result, path)
+    RNFS.moveFile(result, path)
       .then(() => {
         console.log('File saved at: ', path);
         uploadFile(path, fileName);
