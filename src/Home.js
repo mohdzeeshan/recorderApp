@@ -203,16 +203,18 @@ const AudioRecorder = () => {
     const path = `${downloadDir}/${fileName}`;
     console.log(downloadDir, fileName, path, 'savePath__');
 
+    uploadFile(result, fileName);
+
     // Move the recorded file to the Downloads folder
-    RNFS.moveFile(result, path)
-      .then(() => {
-        console.log('File saved at: ', path);
-        uploadFile(path, fileName);
-        // listAudioFiles();
-      })
-      .catch(error => {
-        console.log('Error saving file: ', error);
-      });
+    // RNFS.moveFile(result, path)
+    //   .then(() => {
+    //     console.log('File saved at: ', path);
+    //     uploadFile(path, fileName);
+    //     // listAudioFiles();
+    //   })
+    //   .catch(error => {
+    //     console.log('Error saving file: ', error);
+    //   });
   };
 
   // Play selected audio file
