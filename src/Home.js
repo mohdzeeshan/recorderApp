@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import RNFS, {readFile} from 'react-native-fs';
@@ -29,6 +30,7 @@ const AudioRecorder = () => {
   const [currentSound, setCurrentSound] = useState(null);
   const [checklist, setChecklist] = useState([]);
   const [checklistSelected, setChecklistSelected] = useState([])
+  const [loading, setLoading] = useState(false)
 
   getChecklist = async () => {
     const response = await fetch(
@@ -47,12 +49,14 @@ const AudioRecorder = () => {
   const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
   const downloadDir =
     Platform.OS === 'android'
-      ? RNFS.DownloadDirectoryPath
+      ? RNFS.CachesDirectoryPath
       : RNFS.DocumentDirectoryPath;
 
   const uploadFile = async (filePath, fileName) => {
+    setLoading(true)
     if (!filePath) {
       Alert.alert('Error', 'No file selected');
+      setLoading(false)
       return;
     }
 
@@ -81,6 +85,7 @@ const AudioRecorder = () => {
       const responseJSON = await response.json();
 
       if (responseJSON) {
+        setLoading(false)
         console.log(
           JSON.stringify(responseJSON.checklist),
           'responseJSSONNN__',
@@ -93,6 +98,8 @@ const AudioRecorder = () => {
           console.log('response File Creatd');
           playAudio(path);
           // listAudioFiles()
+        }).catch((e)=>{
+          Alert.alert('write Err', JSON.stringify(e))
         });
       }
     } catch (error) {
@@ -279,6 +286,7 @@ const AudioRecorder = () => {
         <Text style={{fontSize: 18, fontWeight: 600, marginBottom: 20}}>
           Checklist
         </Text>
+        {loading && <ActivityIndicator/>}
         {Object.keys(checklist).map(key => (
           <View  key={key} style={{flexDirection:'row', marginBottom:10, alignItems:'center'}}>
             <CheckBox disabled value={ checklistSelected[key] == true } onValeChange={() => {}} style={{}} />
